@@ -1,0 +1,25 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('docs');
+---
+
+<Layout title="База знаний LADA — Инструкции по ремонту и схемам">
+	<section style="text-align: center; padding: 2rem 0;">
+		<h1>Справочник по ремонту и обслуживанию LADA</h1>
+		<p style="color: #64748b; max-width: 600px; margin: 0 auto;">Пошаговые руководства, схемы блоков предохранителей, расшифровка ошибок OBD2 и каталожные артикулы запчастей.</p>
+	</section>
+
+	<section id="topics">
+		<h2>Популярные темы и инструкции ({posts.length})</h2>
+		<div class="grid">
+			{posts.map(post => (
+				<a href={`/docs/${post.slug}`} class="card">
+					<span class="badge">{post.data.category}</span>
+					<h3>{post.data.title}</h3>
+				</a>
+			))}
+		</div>
+	</section>
+</Layout>

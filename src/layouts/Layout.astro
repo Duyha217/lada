@@ -1,0 +1,69 @@
+---
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const { title, description = "Справочник по ремонту и обслуживанию автомобилей LADA" } = Astro.props;
+---
+
+<!usr/bin/env html>
+<html lang="ru">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title} | LADA Справочник</title>
+		<meta name="description" content={description} />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	</head>
+	<body>
+		<header class="header">
+			<div class="container">
+				<a href="/" class="logo">🚗 LADA Spravka</a>
+				<nav class="nav">
+					<a href="/">Главная</a>
+					<a href="/#topics">Все темы</a>
+				</nav>
+			</div>
+		</header>
+		<main class="container content">
+			<slot />
+		</main>
+		<footer class="footer">
+			<div class="container">
+				<p>© {new Date().getFullYear()} LADA Spravka. База знаний по ремонту и обслуживанию ВАЗ.</p>
+			</div>
+		</footer>
+	</body>
+</html>
+
+<style is:global>
+	:root {
+		--primary: #d97706;
+		--primary-hover: #b45309;
+		--bg: #f8fafc;
+		--text: #0f172a;
+		--card-bg: #ffffff;
+		--border: #e2e8f0;
+	}
+	* { box-sizing: border-box; margin: 0; padding: 0; }
+	body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+	.container { max-width: 1000px; margin: 0 auto; padding: 0 1rem; }
+	.header { background: #1e293b; color: white; padding: 1rem 0; }
+	.header .container { display: flex; justify-content: space-between; align-items: center; }
+	.logo { font-size: 1.25rem; font-weight: bold; color: white; text-decoration: none; }
+	.nav a { color: #cbd5e1; text-decoration: none; margin-left: 1rem; }
+	.nav a:hover { color: white; }
+	.content { padding: 2rem 1rem; }
+	.footer { background: #0f172a; color: #94a3b8; text-align: center; padding: 2rem 0; margin-top: 3rem; font-size: 0.9rem; }
+	h1 { margin-bottom: 1rem; color: #0f172a; font-size: 2rem; }
+	h2 { margin: 1.5rem 0 0.75rem 0; color: #1e293b; }
+	p { margin-bottom: 1rem; }
+	ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+	blockquote { background: #fef3c7; border-left: 4px solid var(--primary); padding: 1rem; margin: 1rem 0; border-radius: 4px; }
+	.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+	.card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; }
+	.card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: var(--primary); }
+	.badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.5rem; }
+	.card h3 { font-size: 1.05rem; line-height: 1.4; color: #1e293b; }
+</style>
