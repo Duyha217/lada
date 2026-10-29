@@ -21,7 +21,7 @@ const {
 
 const filteredHeadings = headings.filter(h => h.depth === 2);
 
-// Функция для формирования правильного пути к категории
+// Функция генерации ссылки на категорию
 const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().replace(/\s+/g, '-')}/`;
 ---
 
@@ -45,7 +45,8 @@ const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().re
 				</a>
 				<nav class="main-nav">
 					<a href="/" class="nav-link">📁 Главная</a>
-					<!-- Ссылки на ключевые категории -->
+					
+					<!-- Динамические ссылки на топовые модели -->
 					<a href={getCategoryUrl("Granta")} class="nav-link">Granta</a>
 					<a href={getCategoryUrl("Vesta")} class="nav-link">Vesta</a>
 					<a href={getCategoryUrl("Largus")} class="nav-link">Largus</a>
@@ -63,13 +64,12 @@ const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().re
 				</nav>
 			</div>
 		</header>
-        <!-- Дальше остальной ваш код Layout (breadcrumbs, main, footer и стили)... -->
 
 		<nav class="breadcrumbs">
 			<div class="container">
 				<a href="/">Главная</a>
 				<span class="breadcrumb-sep">›</span>
-				<a href={getCategorySlug(category)}>{category}</a>
+				<a href={getCategoryUrl(category)}>{category}</a>
 				<span class="breadcrumb-sep">›</span>
 				<span class="breadcrumb-current">{title}</span>
 			</div>
@@ -83,7 +83,7 @@ const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().re
 					</article>
 
 					<aside class="article-sidebar">
-						<!-- Поиск с подсказками -->
+						<!-- Поиск -->
 						<div class="sidebar-box search-box">
 							<div class="search-input-wrapper">
 								<span class="search-icon">🔍</span>
@@ -236,7 +236,7 @@ const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().re
 	.poll-thanks { display: none; color: #166534; font-weight: 600; font-size: 0.85rem; margin-top: 0.5rem; }
 
 	.sidebar-box { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
-	.sidebar-title.orange { font-size: 0.85rem; font-weight: 800; color: #ea580c; letter-spacing: 0.05em; margin-bottom: 1rem; }
+	.sidebar-title.orange { font-size: 0.85rem; font-weight: 800; color: #ea580c; letter-spacing: 0.0em; margin-bottom: 1rem; }
 
 	.search-box { position: relative; }
 	.search-input-wrapper { display: flex; align-items: center; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; }
@@ -250,9 +250,4 @@ const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().re
 	.toc-item:hover { color: #ea580c; }
 	.related-list { display: flex; flex-direction: column; gap: 0.75rem; }
 	.related-item { color: #1e293b; text-decoration: none; font-size: 0.9rem; font-weight: 500; line-height: 1.35; transition: color 0.2s; }
-	.related-item:hover { color: #ea580c; }
-
-	.card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px -5px rgba(234,88,12,0.15); border-color: #ea580c !important; }
-
-	.site-footer-premium { background: #0f172a; color: #94a3b8; padding: 2rem 0; margin-top: 3rem; text-align: center; font-size: 0.85rem; }
-</style>
+	.related-item:
