@@ -130,40 +130,47 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 
 		<!-- Скрипт живого поиска -->
 		<script is:inline define:vars={{ searchData }}>
-			const searchInput = document.getElementById('searchInput');
-			const searchResults = document.getElementById('searchResults');
+	const searchInput = document.getElementById('searchInput');
+	const searchResults = document.getElementById('searchResults');
 
-			if (searchInput && searchResults && searchData) {
-				searchInput.addEventListener('input', (e) => {
-					const query = e.target.value.toLowerCase().trim();
-					if (query.length < 2) {
-						searchResults.style.display = 'none';
-						return;
-					}
-
-					const matches = searchData.filter(item => 
-						item.title.toLowerCase().includes(query)
-					).slice(0, 6);
-
-					if (matches.length > 0) {
-						searchResults.innerHTML = matches.map(m => `
-							<a href="/docs/${m.slug}" class="search-result-item">
-								📁 ${m.title}
-							</a>
-						`).join('');
-						searchResults.style.display = 'block';
-					} else {
-						searchResults.style.display = 'none';
-					}
-				});
-
-				document.addEventListener('click', (e) => {
-					if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-						searchResults.style.display = 'none';
-					}
-				});
+	if (searchInput && searchResults && searchData) {
+		searchInput.addEventListener('input', (e) => {
+			const query = e.target.value.toLowerCase().trim();
+			
+			// Если меньше 2 символов — скрываем
+			if (query.length < 2) {
+				searchResults.style.display = 'none';
+				return;
 			}
-		</script>
+
+			// Умный поиск: разбиваем запрос на слова, чтобы искать надежнее
+			const words = query.split(/\s+/);
+			const matches = searchData.filter(item => {
+				const title = item.title.toLowerCase();
+				return words.every(word => title.includes(word));
+			}).slice(0, 8); // Показываем до 8 результатов
+
+			if (matches.length > 0) {
+				searchResults.innerHTML = matches.map(m => `
+					<a href="/docs/${m.slug}" class="search-result-item">
+						📁 ${m.title}
+					</a>
+				`).join('');
+				searchResults.style.display = 'block';
+			} else {
+				searchResults.innerHTML = '<div style="padding: 0.6rem 0.8rem; font-size: 0.85rem; color: #64748b;">Ничего не найдено</div>';
+				searchResults.style.display = 'block';
+			}
+		});
+
+		// Закрываем при клике вне поиска
+		document.addEventListener('click', (e) => {
+			if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+				searchResults.style.display = 'none';
+			}
+		});
+	}
+</script>
 	</body>
 </html>
 
