@@ -10,9 +10,29 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content } = await entry.render();
+const { Content, headings } = await entry.render();
+
+// Получаем похожие статьи из той же категории
+const allDocs = await getCollection('docs');
+const relatedDocs = allDocs
+  .filter(doc => doc.data.category === entry.data.category && doc.slug !== entry.slug)
+  .slice(0, 5);
+
+// Подготавливаем данные всех статей для поиска в сайдбаре
+const searchData = allDocs.map(doc => ({
+  title: doc.data.title,
+  slug: doc.slug,
+  category: doc.data.category
+}));
 ---
 
-<Layout title={entry.data.title} description={entry.data.description} category={entry.data.category}>
+<Layout 
+	title={entry.data.title} 
+	description={entry.data.description} 
+	category={entry.data.category}
+	headings={headings}
+	related={relatedDocs}
+	searchData={searchData}
+>
 	<Content />
 </Layout>
