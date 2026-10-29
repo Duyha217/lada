@@ -16,7 +16,7 @@ const {
 	headings = [],
 	related = [],
 	searchData = [],
-	categories = ["Granta", "Vesta", "Largus", "Kalina"]
+	categories = ["Granta", "Vesta", "Largus", "Kalina", "Priora", "Niva Legend"]
 } = Astro.props;
 
 const filteredHeadings = headings.filter(h => h.depth === 2);
@@ -83,6 +83,7 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 					</article>
 
 					<aside class="article-sidebar">
+						<!-- Поиск с подсказками -->
 						<div class="sidebar-box search-box">
 							<div class="search-input-wrapper">
 								<span class="search-icon">🔍</span>
@@ -127,10 +128,41 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 			</div>
 		</footer>
 
-		<script is:inline define:vars={{ searchData: [] }}>
+		<!-- Скрипт живого поиска -->
+		<script is:inline define:vars={{ searchData }}>
 			const searchInput = document.getElementById('searchInput');
 			const searchResults = document.getElementById('searchResults');
-			// простая заглушка для поиска, если данные не переданы
+
+			if (searchInput && searchResults && searchData) {
+				searchInput.addEventListener('input', (e) => {
+					const query = e.target.value.toLowerCase().trim();
+					if (query.length < 2) {
+						searchResults.style.display = 'none';
+						return;
+					}
+
+					const matches = searchData.filter(item => 
+						item.title.toLowerCase().includes(query)
+					).slice(0, 6);
+
+					if (matches.length > 0) {
+						searchResults.innerHTML = matches.map(m => `
+							<a href="/docs/${m.slug}" class="search-result-item">
+								📁 ${m.title}
+							</a>
+						`).join('');
+						searchResults.style.display = 'block';
+					} else {
+						searchResults.style.display = 'none';
+					}
+				});
+
+				document.addEventListener('click', (e) => {
+					if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+						searchResults.style.display = 'none';
+					}
+				});
+			}
 		</script>
 	</body>
 </html>
@@ -173,14 +205,26 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 
 	.article-main { background: #fff; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
 	.article-main h1 { font-size: 2.1rem; font-weight: 800; line-height: 1.25; margin-bottom: 1.5rem; color: #0f172a; }
-	
+	.article-main > p:first-of-type::first-letter { font-size: 3.2rem; font-weight: 800; float: left; line-height: 1; margin-right: 0.5rem; color: #ea580c; }
+	.article-main h2 { font-size: 1.35rem; font-weight: 700; margin: 2rem 0 1rem 0; color: #0f172a; border-bottom: 2px solid #ea580c; padding-bottom: 0.4rem; }
+	.article-main p { margin-bottom: 1.2rem; font-size: 1.05rem; color: #334155; }
+	.article-main ul { list-style: none; margin: 1rem 0 1.5rem 0; }
+	.article-main ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.6rem; color: #334155; }
+	.article-main ul li::before { content: "🔸"; position: absolute; left: 0; font-size: 0.8rem; top: 2px; }
+
 	.sidebar-box { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
 	.sidebar-title.orange { font-size: 0.85rem; font-weight: 800; color: #ea580c; margin-bottom: 1rem; }
-	
+
+	.search-box { position: relative; }
+	.search-input-wrapper { display: flex; align-items: center; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; }
+	.search-input-wrapper input { border: none; background: transparent; outline: none; width: 100%; margin-left: 0.5rem; font-size: 0.9rem; }
+	.search-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 50; margin-top: 4px; overflow: hidden; }
+	.search-result-item { display: block; padding: 0.6rem 0.8rem; color: #334155; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
+	.search-result-item:hover { background: #fff7ed; color: #ea580c; }
+
 	.toc-list { display: flex; flex-direction: column; gap: 0.5rem; }
 	.toc-item { color: #475569; text-decoration: none; font-size: 0.88rem; }
 	.toc-item:hover { color: #ea580c; }
-
 	.related-list { display: flex; flex-direction: column; gap: 0.75rem; }
 	.related-item { color: #1e293b; text-decoration: none; font-size: 0.9rem; font-weight: 500; }
 	.related-item:hover { color: #ea580c; }
