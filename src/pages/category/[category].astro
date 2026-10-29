@@ -2,15 +2,24 @@
 import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
+export function slugify(text: string) {
+  if (!text) return 'other';
+  return text
+    .toLowerCase()
+    .replace(/^lada\s+/i, '')
+    .trim()
+    .replace(/[^a-z0-9а-яё\s-]/gi, '')
+    .replace(/\s+/g, '-') || 'other';
+}
+
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
-  const categories = [...new Set(docs.map(doc => doc.data.category))];
+  // Собираем только валидные категории, убираем пустые
+  const categories = [...new Set(docs.map(doc => doc.data.category))].filter(Boolean);
   
   return categories.map(cat => {
-    // Безопасный слаг для URL (например "LADA Granta" -> "granta")
-    const slug = cat.toLowerCase().replace(/^lada\s+/i, '').trim().replace(/\s+/g, '-');
     return {
-      params: { category: slug },
+      params: { category: slugify(cat) },
       props: { categoryName: cat, docs: docs.filter(doc => doc.data.category === cat) }
     };
   });
@@ -18,7 +27,7 @@ export async function getStaticPaths() {
 
 const { categoryName, docs } = Astro.props;
 const allDocs = await getCollection('docs');
-const categories = [...new Set(allDocs.map(doc => doc.data.category))];
+const categories = [...new Set(allDocs.map(doc => doc.data.category))].filter(Boolean);
 ---
 
 <Layout title={`Материалы по ${categoryName}`} category={categoryName} categories={categories}>
