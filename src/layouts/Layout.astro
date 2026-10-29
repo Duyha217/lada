@@ -3,9 +3,21 @@ interface Props {
 	title: string;
 	description?: string;
 	category?: string;
+	headings?: Array<{ depth: number; slug: string; text: string }>;
+	related?: Array<any>;
+	searchData?: Array<{ title: string; slug: string; category: string }>;
 }
 
-const { title, description = "Справочник по ремонту и обслуживанию автомобилей LADA", category = "Granta" } = Astro.props;
+const { 
+	title, 
+	description = "Справочник по ремонту и обслуживанию LADA", 
+	category = "Granta",
+	headings = [],
+	related = [],
+	searchData = []
+} = Astro.props;
+
+const filteredHeadings = headings.filter(h => h.depth === 2);
 ---
 
 <!DOCTYPE html>
@@ -17,7 +29,7 @@ const { title, description = "Справочник по ремонту и обс
 		<meta name="description" content={description} />
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 	</head>
 	<body>
 		<header class="site-header">
@@ -28,16 +40,16 @@ const { title, description = "Справочник по ремонту и обс
 				</a>
 				<nav class="main-nav">
 					<a href="/" class="nav-link">📁 Главная</a>
-					<a href="/#topics" class="nav-link">📁 Все темы</a>
+					<a href="/#topics" class="nav-link">📁 Все разделы ▾</a>
 				</nav>
 			</div>
 		</header>
 
-		<nav class="breadcrumbs" aria-label="Навигация">
+		<nav class="breadcrumbs">
 			<div class="container">
 				<a href="/">Главная</a>
 				<span class="breadcrumb-sep">›</span>
-				<span>{category}</span>
+				<a href="/">{category}</a>
 				<span class="breadcrumb-sep">›</span>
 				<span class="breadcrumb-current">{title}</span>
 			</div>
@@ -51,14 +63,40 @@ const { title, description = "Справочник по ремонту и обс
 					</article>
 
 					<aside class="article-sidebar">
-						<div class="sidebar-box">
-							<h3>🔍 Поиск статей</h3>
-							<input type="text" placeholder="Поиск по сайту..." class="search-input" />
+						<!-- Поиск с живыми подсказками -->
+						<div class="sidebar-box search-box">
+							<div class="search-input-wrapper">
+								<span class="search-icon">🔍</span>
+								<input type="text" id="searchInput" placeholder="Поиск статей..." autocomplete="off" />
+							</div>
+							<div id="searchResults" class="search-dropdown"></div>
 						</div>
-						<div class="sidebar-box">
-							<h3>📖 Советы автолюбителям</h3>
-							<p style="font-size: 0.9rem; color: #64748b;">Обслуживайте автомобиль вовремя по регламенту завода-изготовителя, чтобы избежать дорогостоящего ремонта.</p>
-						</div>
+
+						<!-- Оглавление статьи -->
+						{filteredHeadings.length > 0 && (
+							<div class="sidebar-box toc-box">
+								<h3 class="sidebar-title orange">СОДЕРЖАНИЕ</h3>
+								<nav class="toc-list">
+									{filteredHeadings.map(h => (
+										<a href={`#${h.slug}`} class="toc-item">{h.text}</a>
+									))}
+								</nav>
+							</div>
+						)}
+
+						<!-- Похожие статьи -->
+						{related.length > 0 && (
+							<div class="sidebar-box related-box">
+								<h3 class="sidebar-title orange">ПОХОЖИЕ СТАТЬИ</h3>
+								<div class="related-list">
+									{related.map(item => (
+										<a href={`/docs/${item.slug}`} class="related-item">
+											{item.data.title}
+										</a>
+									))}
+								</div>
+							</div>
+						)}
 					</aside>
 				</div>
 			</div>
@@ -66,31 +104,72 @@ const { title, description = "Справочник по ремонту и обс
 
 		<footer class="site-footer-premium">
 			<div class="container">
-				<div class="footer-grid">
-					<div class="footer-col">
-						<div class="footer-brand">🛠 Лада Справка</div>
-						<p class="footer-about">Lada (ВАЗ) — базы знаний, руководства по самостоятельному обслуживанию и ремонту популярной автотехники.</p>
-					</div>
-					<div class="footer-col">
-						<h4>Навигация</h4>
-						<ul>
-							<li><a href="/">Главная страница</a></li>
-							<li><a href="/#topics">Все материалы</a></li>
-						</ul>
-					</div>
-				</div>
 				<div class="footer-bottom">
 					<p>© 2026 Лада Справка. Все права защищены.</p>
 				</div>
 			</div>
 		</footer>
+
+		<!-- Скрипт для работы поиска и оглавления -->
+		<script is:inline define:vars={{ searchData }}>
+			// 1. Поиск с подсказками
+			const searchInput = document.getElementById('searchInput');
+			const searchResults = document.getElementById('searchResults');
+
+			if (searchInput && searchResults) {
+				searchInput.addEventListener('input', (e) => {
+					const query = e.target.value.toLowerCase().trim();
+					if (query.length < 2) {
+						searchResults.style.display = 'none';
+						return;
+					}
+
+					const matches = searchData.filter(item => 
+						item.title.toLowerCase().includes(query)
+					).slice(0, 6);
+
+					if (matches.length > 0) {
+						searchResults.innerHTML = matches.map(m => `
+							<a href="/docs/${m.slug}" class="search-result-item">
+								📁 ${m.title}
+							</a>
+						`).join('');
+						searchResults.style.display = 'block';
+					} else {
+						searchResults.style.display = 'none';
+					}
+				});
+
+				document.addEventListener('click', (e) => {
+					if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+						searchResults.style.display = 'none';
+					}
+				});
+			}
+
+			// 2. Интерактивные опросы
+			document.addEventListener('DOMContentLoaded', () => {
+				const pollButtons = document.querySelectorAll('.poll-btn');
+				pollButtons.forEach(btn => {
+					btn.addEventListener('click', function() {
+						const parent = this.closest('.poll-box');
+						if (parent) {
+							parent.querySelectorAll('.poll-btn').forEach(b => b.classList.remove('active'));
+							this.classList.add('active');
+							const thanks = parent.querySelector('.poll-thanks');
+							if (thanks) thanks.style.display = 'block';
+						}
+					});
+				});
+			});
+		</script>
 	</body>
 </html>
 
 <style is:global>
 	:root {
-		--primary: #2563eb;
-		--primary-hover: #1d4ed8;
+		--primary: #ea580c; /* Оранжевый фирменный акцент конкурента */
+		--primary-hover: #c2410c;
 		--bg: #f8fafc;
 		--text: #1e293b;
 		--card-bg: #ffffff;
@@ -100,56 +179,73 @@ const { title, description = "Справочник по ремонту и обс
 	body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
 	.container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
 	
-	/* Header */
+	/* Header & Nav */
 	.site-header { background: #ffffff; border-bottom: 1px solid var(--border); padding: 1rem 0; sticky: top; }
 	.header-inner { display: flex; justify-content: space-between; align-items: center; }
-	.logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.25rem; color: var(--text); text-decoration: none; }
+	.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.3rem; color: #ea580c; text-decoration: none; }
 	.main-nav { display: flex; gap: 1rem; }
-	.nav-link { color: #64748b; text-decoration: none; font-weight: 500; font-size: 0.95rem; }
+	.nav-link { color: #475569; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
 	.nav-link:hover { color: var(--primary); }
 
 	/* Breadcrumbs */
-	.breadcrumbs { background: #f1f5f9; padding: 0.75rem 0; font-size: 0.875rem; color: #64748b; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-	.breadcrumbs a { color: var(--primary); text-decoration: none; }
-	.breadcrumb-sep { margin: 0 0.5rem; }
-	.breadcrumb-current { color: #0f172a; font-weight: 500; }
+	.breadcrumbs { background: transparent; padding: 1rem 0; font-size: 0.85rem; color: #64748b; }
+	.breadcrumbs a { color: #64748b; text-decoration: none; }
+	.breadcrumb-sep { margin: 0 0.4rem; color: #cbd5e1; }
+	.breadcrumb-current { color: #1e293b; font-weight: 500; }
 
 	/* Layout Grid */
-	.article-layout { display: grid; grid-template-columns: 1fr 300px; gap: 2rem; }
+	.article-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; }
 	@media (max-width: 900px) {
 		.article-layout { grid-template-columns: 1fr; }
 	}
 
 	/* Main Article Styles */
-	.article-main { background: #fff; padding: 2rem; border-radius: 12px; border: 1px solid var(--border); }
-	.article-main h1 { font-size: 2rem; line-height: 1.3; margin-bottom: 1.5rem; color: #0f172a; }
-	.article-main h2 { font-size: 1.4rem; margin: 1.8rem 0 1rem 0; color: #1e293b; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem; }
+	.article-main { background: #fff; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+	.article-main h1 { font-size: 2.1rem; font-weight: 800; line-height: 1.25; margin-bottom: 1.5rem; color: #0f172a; }
+	
+	/* Первоначальная буквица как у конкурента */
+	.article-main > p:first-of-type::first-letter {
+		font-size: 3.2rem; font-weight: 800; float: left; line-height: 1; margin-right: 0.5rem; color: #ea580c;
+	}
+
+	.article-main h2 { font-size: 1.35rem; font-weight: 700; margin: 2rem 0 1rem 0; color: #0f172a; border-bottom: 2px solid #ea580c; padding-bottom: 0.4rem; }
 	.article-main p { margin-bottom: 1.2rem; font-size: 1.05rem; color: #334155; }
-	.article-main ul, .article-main ol { margin: 1rem 0 1.5rem 1.5rem; color: #334155; }
-	.article-main li { margin-bottom: 0.5rem; }
 	
-	/* Tables & Alerts */
-	table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
-	th, td { border: 1px solid var(--border); padding: 0.75rem; text-align: left; font-size: 0.95rem; }
-	th { background: #f8fafc; font-weight: 600; }
-	blockquote { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 1rem; margin: 1.5rem 0; border-radius: 4px; font-weight: 500; }
-	
-	/* Accordions / Details */
-	details { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
-	summary { font-weight: 600; cursor: pointer; color: var(--primary); }
+	/* Списки с оранжевыми маркерами */
+	.article-main ul { list-style: none; margin: 1rem 0 1.5rem 0; }
+	.article-main ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.6rem; color: #334155; }
+	.article-main ul li::before { content: "🔸"; position: absolute; left: 0; font-size: 0.8rem; top: 2px; }
 
-	/* Sidebar */
-	.sidebar-box { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
-	.sidebar-box h3 { font-size: 1.1rem; margin-bottom: 1rem; color: #0f172a; }
-	.search-input { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; }
+	/* Опросы в статье */
+	.poll-box { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0; }
+	.poll-title { font-weight: 700; color: #9a3412; margin-bottom: 0.75rem; font-size: 0.95rem; }
+	.poll-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+	.poll-btn { background: #ffffff; border: 1px solid #fed7aa; border-radius: 8px; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 600; color: #431407; cursor: pointer; transition: all 0.2s; }
+	.poll-btn:hover, .poll-btn.active { background: #ea580c; color: #ffffff; border-color: #ea580c; }
+	.poll-thanks { display: none; color: #166534; font-weight: 600; font-size: 0.85rem; margin-top: 0.5rem; }
 
-	/* Footer */
-	.site-footer-premium { background: #1e293b; color: #94a3b8; padding: 3rem 0 1.5rem 0; margin-top: 3rem; }
-	.footer-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #334155; }
-	.footer-brand { font-size: 1.2rem; font-weight: 700; color: #f1f5f9; margin-bottom: 0.5rem; }
-	.footer-col h4 { color: #f1f5f9; margin-bottom: 1rem; }
-	.footer-col ul { list-style: none; }
-	.footer-col a { color: #94a3b8; text-decoration: none; }
-	.footer-col a:hover { color: #60a5fa; }
-	.footer-bottom { text-align: center; padding-top: 1.5rem; font-size: 0.85rem; }
+	/* Сайдбар */
+	.sidebar-box { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; }
+	.sidebar-title.orange { font-size: 0.85rem; font-weight: 800; color: #ea580c; letter-spacing: 0.05em; margin-bottom: 1rem; }
+
+	/* Поиск */
+	.search-box { position: relative; }
+	.search-input-wrapper { display: flex; align-items: center; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; }
+	.search-input-wrapper input { border: none; background: transparent; outline: none; width: 100%; margin-left: 0.5rem; font-size: 0.9rem; }
+	.search-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 50; margin-top: 4px; overflow: hidden; }
+	.search-result-item { display: block; padding: 0.6rem 0.8rem; color: #334155; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
+	.search-result-item:hover { background: #fff7ed; color: #ea580c; }
+
+	/* Оглавление */
+	.toc-list { display: flex; flex-direction: column; gap: 0.5rem; }
+	.toc-item { color: #475569; text-decoration: none; font-size: 0.88rem; line-height: 1.4; transition: color 0.2s; }
+	.toc-item:hover { color: #ea580c; }
+
+	/* Похожие записи */
+	.related-list { display: flex; flex-direction: column; gap: 0.75rem; }
+	.related-item { color: #1e293b; text-decoration: none; font-size: 0.9rem; font-weight: 500; line-height: 1.35; transition: color 0.2s; }
+	.related-item:hover { color: #ea580c; }
+
+	/* Подвал */
+	.site-footer-premium { background: #0f172a; color: #94a3b8; padding: 2rem 0; margin-top: 3rem; text-align: center; font-size: 0.85rem; }
 </style>
