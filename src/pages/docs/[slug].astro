@@ -12,18 +12,22 @@ export async function getStaticPaths() {
 const { entry } = Astro.props;
 const { Content, headings } = await entry.render();
 
-// Получаем похожие статьи из той же категории
 const allDocs = await getCollection('docs');
+
+// Ровно 5 похожих статей из той же категории
 const relatedDocs = allDocs
   .filter(doc => doc.data.category === entry.data.category && doc.slug !== entry.slug)
   .slice(0, 5);
 
-// Подготавливаем данные всех статей для поиска в сайдбаре
+// Данные для поиска
 const searchData = allDocs.map(doc => ({
   title: doc.data.title,
   slug: doc.slug,
   category: doc.data.category
 }));
+
+// Полный список всех уникальных категорий для выпадающего меню
+const categories = [...new Set(allDocs.map(doc => doc.data.category))];
 ---
 
 <Layout 
@@ -33,6 +37,7 @@ const searchData = allDocs.map(doc => ({
 	headings={headings}
 	related={relatedDocs}
 	searchData={searchData}
+	categories={categories}
 >
 	<Content />
 </Layout>
