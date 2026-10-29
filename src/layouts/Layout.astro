@@ -6,6 +6,7 @@ interface Props {
 	headings?: Array<{ depth: number; slug: string; text: string }>;
 	related?: Array<any>;
 	searchData?: Array<{ title: string; slug: string; category: string }>;
+	categories?: Array<string>;
 }
 
 const { 
@@ -14,7 +15,8 @@ const {
 	category = "Granta",
 	headings = [],
 	related = [],
-	searchData = []
+	searchData = [],
+	categories = ["Granta", "Vesta", "Largus", "Kalina", "Priora", "Niva", "XRAY"]
 } = Astro.props;
 
 const filteredHeadings = headings.filter(h => h.depth === 2);
@@ -39,8 +41,16 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 					<span>Лада Справка</span>
 				</a>
 				<nav class="main-nav">
-					<a href="/" class="nav-link">📁 Главная</a>
-					<a href="/#topics" class="nav-link">📁 Все разделы ▾</a>
+					<a href="/#topics" class="nav-link">📁 Главная</a>
+					<!-- Выпадающее меню Все разделы -->
+					<div class="nav-dropdown">
+						<button class="dropdown-toggle">📂 Все разделы ▾</button>
+						<div class="dropdown-menu">
+							{categories.map(cat => (
+								<a href="/#topics" class="dropdown-item">📁 {cat}</a>
+							))}
+						</div>
+					</div>
 				</nav>
 			</div>
 		</header>
@@ -84,7 +94,7 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 							</div>
 						)}
 
-						<!-- Похожие статьи -->
+						<!-- 5 Похожих статей -->
 						{related.length > 0 && (
 							<div class="sidebar-box related-box">
 								<h3 class="sidebar-title orange">ПОХОЖИЕ СТАТЬИ</h3>
@@ -110,9 +120,8 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 			</div>
 		</footer>
 
-		<!-- Скрипт для работы поиска и оглавления -->
+		<!-- Скрипты поиска и опросов -->
 		<script is:inline define:vars={{ searchData }}>
-			// 1. Поиск с подсказками
 			const searchInput = document.getElementById('searchInput');
 			const searchResults = document.getElementById('searchResults');
 
@@ -147,7 +156,6 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 				});
 			}
 
-			// 2. Интерактивные опросы
 			document.addEventListener('DOMContentLoaded', () => {
 				const pollButtons = document.querySelectorAll('.poll-btn');
 				pollButtons.forEach(btn => {
@@ -168,7 +176,7 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 
 <style is:global>
 	:root {
-		--primary: #ea580c; /* Оранжевый фирменный акцент конкурента */
+		--primary: #ea580c;
 		--primary-hover: #c2410c;
 		--bg: #f8fafc;
 		--text: #1e293b;
@@ -180,12 +188,21 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 	.container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
 	
 	/* Header & Nav */
-	.site-header { background: #ffffff; border-bottom: 1px solid var(--border); padding: 1rem 0; sticky: top; }
+	.site-header { background: #ffffff; border-bottom: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
 	.header-inner { display: flex; justify-content: space-between; align-items: center; }
 	.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.3rem; color: #ea580c; text-decoration: none; }
-	.main-nav { display: flex; gap: 1rem; }
+	.main-nav { display: flex; align-items: center; gap: 1.5rem; }
 	.nav-link { color: #475569; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
 	.nav-link:hover { color: var(--primary); }
+
+	/* Выпадающее меню Все разделы */
+	.nav-dropdown { position: relative; display: inline-block; }
+	.dropdown-toggle { background: none; border: none; cursor: pointer; font: inherit; font-weight: 600; color: #475569; padding: 0.5rem 0.75rem; border-radius: 8px; transition: background 0.2s; }
+	.dropdown-toggle:hover { color: var(--primary); background: #fff7ed; }
+	.dropdown-menu { display: none; position: absolute; right: 0; top: 100%; min-width: 220px; max-height: 60vh; overflow-y: auto; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem 0; z-index: 1000; }
+	.nav-dropdown:hover .dropdown-menu { display: block; }
+	.dropdown-item { display: block; padding: 0.5rem 1rem; color: #334155; text-decoration: none; font-size: 0.9rem; transition: background 0.15s; }
+	.dropdown-item:hover { background: #fff7ed; color: #ea580c; }
 
 	/* Breadcrumbs */
 	.breadcrumbs { background: transparent; padding: 1rem 0; font-size: 0.85rem; color: #64748b; }
@@ -195,28 +212,19 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 
 	/* Layout Grid */
 	.article-layout { display: grid; grid-template-columns: 1fr 320px; gap: 2rem; }
-	@media (max-width: 900px) {
-		.article-layout { grid-template-columns: 1fr; }
-	}
+	@media (max-width: 900px) { .article-layout { grid-template-columns: 1fr; } }
 
 	/* Main Article Styles */
 	.article-main { background: #fff; padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
 	.article-main h1 { font-size: 2.1rem; font-weight: 800; line-height: 1.25; margin-bottom: 1.5rem; color: #0f172a; }
-	
-	/* Первоначальная буквица как у конкурента */
-	.article-main > p:first-of-type::first-letter {
-		font-size: 3.2rem; font-weight: 800; float: left; line-height: 1; margin-right: 0.5rem; color: #ea580c;
-	}
-
+	.article-main > p:first-of-type::first-letter { font-size: 3.2rem; font-weight: 800; float: left; line-height: 1; margin-right: 0.5rem; color: #ea580c; }
 	.article-main h2 { font-size: 1.35rem; font-weight: 700; margin: 2rem 0 1rem 0; color: #0f172a; border-bottom: 2px solid #ea580c; padding-bottom: 0.4rem; }
 	.article-main p { margin-bottom: 1.2rem; font-size: 1.05rem; color: #334155; }
-	
-	/* Списки с оранжевыми маркерами */
 	.article-main ul { list-style: none; margin: 1rem 0 1.5rem 0; }
 	.article-main ul li { position: relative; padding-left: 1.5rem; margin-bottom: 0.6rem; color: #334155; }
 	.article-main ul li::before { content: "🔸"; position: absolute; left: 0; font-size: 0.8rem; top: 2px; }
 
-	/* Опросы в статье */
+	/* Опросы */
 	.poll-box { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; padding: 1.25rem; margin: 1.5rem 0; }
 	.poll-title { font-weight: 700; color: #9a3412; margin-bottom: 0.75rem; font-size: 0.95rem; }
 	.poll-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -236,16 +244,13 @@ const filteredHeadings = headings.filter(h => h.depth === 2);
 	.search-result-item { display: block; padding: 0.6rem 0.8rem; color: #334155; text-decoration: none; font-size: 0.85rem; border-bottom: 1px solid #f1f5f9; }
 	.search-result-item:hover { background: #fff7ed; color: #ea580c; }
 
-	/* Оглавление */
+	/* Оглавление и Похожие */
 	.toc-list { display: flex; flex-direction: column; gap: 0.5rem; }
 	.toc-item { color: #475569; text-decoration: none; font-size: 0.88rem; line-height: 1.4; transition: color 0.2s; }
 	.toc-item:hover { color: #ea580c; }
-
-	/* Похожие записи */
 	.related-list { display: flex; flex-direction: column; gap: 0.75rem; }
 	.related-item { color: #1e293b; text-decoration: none; font-size: 0.9rem; font-weight: 500; line-height: 1.35; transition: color 0.2s; }
 	.related-item:hover { color: #ea580c; }
 
-	/* Подвал */
 	.site-footer-premium { background: #0f172a; color: #94a3b8; padding: 2rem 0; margin-top: 3rem; text-align: center; font-size: 0.85rem; }
 </style>
