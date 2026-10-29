@@ -3,13 +3,13 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
 export async function getStaticPaths() {
+  export async function getStaticPaths() {
   const docs = await getCollection('docs');
-  // Создаем путь для каждой уникальной категории
   const categories = [...new Set(docs.map(doc => doc.data.category))];
   
   return categories.map(cat => {
-    // Делаем простой URL-совместимый слаг (например, "Niva Legend" -> "niva-legend")
-    const slug = cat.toLowerCase().replace(/\s+/g, '-');
+    // Надежный слаг: переводим в нижний регистр и заменяем пробелы на дефисы
+    const slug = cat.toLowerCase().trim().replace(/\s+/g, '-');
     return {
       params: { category: slug },
       props: { categoryName: cat, docs: docs.filter(doc => doc.data.category === cat) }
