@@ -13,21 +13,6 @@ const { entry } = Astro.props;
 const { Content } = await entry.render();
 ---
 
-<Layout title={entry.data.title} description={entry.data.description}>
-	<article>
-		<div style="margin-bottom: 1.5rem;">
-			<a href="/" style="color: var(--primary); text-decoration: none;">← Назад к списку тем</a>
-		</div>
-		<span class="badge">{entry.data.category}</span>
-		<h1>{entry.data.title}</h1>
-		<hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
-		<div class="doc-body">
-			<Content />
-		</div>
-	</article>
+<Layout title={entry.data.title} description={entry.data.description} category={entry.data.category}>
+	<Content />
 </Layout>
-
-<style>
-	.doc-body :global(h2) { margin-top: 2rem; }
-	.doc-body :global(p) { line-height: 1.7; font-size: 1.05rem; }
-</style>
