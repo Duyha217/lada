@@ -21,8 +21,8 @@ const {
 
 const filteredHeadings = headings.filter(h => h.depth === 2);
 
-// Вспомогательная функция для генерации ссылки на категорию
-const getCategorySlug = (cat: string) => `/category/${cat.toLowerCase().replace(/\s+/g, '-')}/`;
+// Функция для формирования правильного пути к категории
+const getCategoryUrl = (cat: string) => `/category/${cat.toLowerCase().trim().replace(/\s+/g, '-')}/`;
 ---
 
 <!DOCTYPE html>
@@ -45,24 +45,25 @@ const getCategorySlug = (cat: string) => `/category/${cat.toLowerCase().replace(
 				</a>
 				<nav class="main-nav">
 					<a href="/" class="nav-link">📁 Главная</a>
-					<!-- Топовые категории прямо в шапке как у конкурента -->
-					<a href={getCategorySlug("Granta")} class="nav-link">Granta</a>
-					<a href={getCategorySlug("Vesta")} class="nav-link">Vesta</a>
-					<a href={getCategorySlug("Largus")} class="nav-link">Largus</a>
-					<a href={getCategorySlug("Kalina")} class="nav-link">Kalina</a>
+					<!-- Ссылки на ключевые категории -->
+					<a href={getCategoryUrl("Granta")} class="nav-link">Granta</a>
+					<a href={getCategoryUrl("Vesta")} class="nav-link">Vesta</a>
+					<a href={getCategoryUrl("Largus")} class="nav-link">Largus</a>
+					<a href={getCategoryUrl("Kalina")} class="nav-link">Kalina</a>
 
-					<!-- Выпадающее меню Все разделы -->
+					<!-- Выпадающее меню всех разделов -->
 					<div class="nav-dropdown">
 						<button class="dropdown-toggle">📂 Все разделы ▾</button>
 						<div class="dropdown-menu">
 							{categories.map(cat => (
-								<a href={getCategorySlug(cat)} class="dropdown-item">📁 {cat}</a>
+								<a href={getCategoryUrl(cat)} class="dropdown-item">📁 {cat}</a>
 							))}
 						</div>
 					</div>
 				</nav>
 			</div>
 		</header>
+        <!-- Дальше остальной ваш код Layout (breadcrumbs, main, footer и стили)... -->
 
 		<nav class="breadcrumbs">
 			<div class="container">
