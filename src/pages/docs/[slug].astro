@@ -38,6 +38,7 @@ const categories = [...new Set(allDocs.map(doc => doc.data.category))];
 	related={relatedDocs}
 	searchData={searchData}
 	categories={categories}
+	pubDate={entry.data.pubDate}
 >
 	<Content />
 </Layout>

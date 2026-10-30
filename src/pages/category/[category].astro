@@ -15,50 +15,54 @@ export function slugify(text: string) {
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
   const categories = [...new Set(docs.map(doc => doc.data.category))].filter(Boolean);
-  
-  return categories.map(cat => {
-    return {
-      params: { category: slugify(cat) },
-      props: { categoryName: cat, docs: docs.filter(doc => doc.data.category === cat) }
-    };
-  });
+
+  return categories.map(cat => ({
+    params: { category: slugify(cat) },
+    props: {
+      categoryName: cat,
+      docs: docs.filter(doc => doc.data.category === cat).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+    },
+  }));
 }
 
 const { categoryName, docs } = Astro.props;
 const allDocs = await getCollection('docs');
 const categories = [...new Set(allDocs.map(doc => doc.data.category))].filter(Boolean);
-
-// Собираем данные для поиска
-const searchData = allDocs.map(doc => ({
-  title: doc.data.title,
-  slug: doc.slug,
-  category: doc.data.category
-}));
+const searchData = allDocs.map(doc => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+const plural = (n: number, one: string, few: string, many: string) => {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+};
+const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 
-<Layout title={`Материалы по ${categoryName}`} category={categoryName} categories={categories} searchData={searchData}>
-	<div style="background: #1e293b; color: white; padding: 2.5rem 2rem; border-radius: 16px; text-align: center; margin-bottom: 2rem;">
-		<div style="font-size: 3rem; margin-bottom: 0.5rem;">📁</div>
-		<h1 style="color: white; margin-bottom: 0.75rem; font-size: 2.2rem;">{categoryName}</h1>
-		<div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; font-size: 0.9rem; opacity: 0.9;">
-			<span>📖 Понятные инструкции</span>
-			<span>•</span>
-			<span>✅ Проверенные решения</span>
-			<span>•</span>
-			<span>⚡ Без лишних слов</span>
-		</div>
-	</div>
+<Layout title={`Материалы по ${categoryName}`} category={categoryName} categories={categories} searchData={searchData} wide>
+	<nav class="breadcrumbs breadcrumbs-wide">
+		<a href="/">Главная</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">{categoryName}</span>
+	</nav>
 
-	<section>
-		<h2 style="font-size: 1.4rem; margin-bottom: 1.5rem; color: #0f172a;">Все материалы по разделу ({docs.length})</h2>
-		<div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem;">
+	<section class="hero hero-category">
+		<h1>{categoryName}</h1>
+		<p>{docs.length} {plural(docs.length, 'инструкция', 'инструкции', 'инструкций')} по обслуживанию и ремонту</p>
+		<div class="hero-search search-box">
+			<div class="search-input-wrapper">
+				<span class="search-icon">🔍</span>
+				<input type="text" id="searchInput" placeholder="Поиск по всем статьям..." autocomplete="off" />
+			</div>
+			<div id="searchResults" class="search-dropdown"></div>
+		</div>
+	</section>
+
+	<section class="home-section">
+		<div class="grid">
 			{docs.map(post => (
-				<a href={`/docs/${post.slug}`} class="card" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; text-decoration: none; color: inherit; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s;">
-                  <div>
-					<span class="badge" style="display: inline-block; background: #fff7ed; color: #ea580c; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; margin-bottom: 0.75rem;">{post.data.category}</span>
-					<h3 style="font-size: 1.05rem; line-height: 1.4; color: #1e293b; font-weight: 700; margin-bottom: 0.5rem;">{post.data.title}</h3>
-                  </div>
-                  <span style="color: #ea580c; font-weight: 600; font-size: 0.85rem; margin-top: 1rem;">Читать статью →</span>
+				<a href={`/docs/${post.slug}`} class="card">
+					<span class="badge">{post.data.category}</span>
+					<h3>{post.data.title}</h3>
+					<p class="card-desc">{post.data.description}</p>
+					<span class="card-foot"><span>{fmt(post.data.pubDate)}</span><span class="card-more">Читать →</span></span>
 				</a>
 			))}
 		</div>

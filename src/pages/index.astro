@@ -2,22 +2,68 @@
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
-const posts = await getCollection('docs');
+const posts = (await getCollection('docs')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const slugify = (text: string) => {
+  if (!text) return 'other';
+  return text.toLowerCase().replace(/^lada\s+/i, '').trim().replace(/[^a-z0-9а-яё\s-]/gi, '').replace(/\s+/g, '-') || 'other';
+};
+
+const categories = [...new Set(posts.map(p => p.data.category))].filter(Boolean);
+const catStats = categories
+  .map(name => ({ name, url: `/category/${slugify(name)}/`, count: posts.filter(p => p.data.category === name).length }))
+  .sort((a, b) => b.count - a.count);
+
+const searchData = posts.map(doc => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+const plural = (n: number, one: string, few: string, many: string) => {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+};
+const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 ---
 
-<Layout title="База знаний LADA — Инструкции по ремонту и схемам">
-	<section style="text-align: center; padding: 2rem 0;">
-		<h1>Справочник по ремонту и обслуживанию LADA</h1>
-		<p style="color: #64748b; max-width: 600px; margin: 0 auto;">Пошаговые руководства, схемы блоков предохранителей, расшифровка ошибок OBD2 и каталожные артикулы запчастей.</p>
+<Layout title="База знаний LADA — Инструкции по ремонту и схемам" wide searchData={searchData} categories={categories}>
+	<section class="hero">
+		<h1>Справочник по ремонту и обслуживанию <span>LADA</span></h1>
+		<p>Пошаговые руководства, схемы блоков предохранителей, расшифровка ошибок OBD2 и артикулы запчастей.</p>
+		<div class="hero-search search-box">
+			<div class="search-input-wrapper">
+				<span class="search-icon">🔍</span>
+				<input type="text" id="searchInput" placeholder="Найти инструкцию..." autocomplete="off" />
+			</div>
+			<div id="searchResults" class="search-dropdown"></div>
+		</div>
+		<div class="hero-stats">
+			<span><strong>{posts.length}</strong> инструкций</span>
+			<span><strong>{categories.length}</strong> моделей</span>
+			<span>Обновлено <strong>{fmt(posts[0].data.pubDate)}</strong></span>
+		</div>
 	</section>
 
-	<section id="topics">
-		<h2>Популярные темы и инструкции ({posts.length})</h2>
+	<section class="home-section">
+		<h2 class="home-heading">Выберите модель</h2>
+		<div class="cat-tiles">
+			{catStats.map(c => (
+				<a href={c.url} class="cat-tile">
+					<span class="cat-tile-icon">🚗</span>
+					<span class="cat-tile-name">{c.name}</span>
+					<span class="cat-tile-count">{c.count} {plural(c.count, 'статья', 'статьи', 'статей')}</span>
+				</a>
+			))}
+		</div>
+	</section>
+
+	<section class="home-section" id="topics">
+		<h2 class="home-heading">Новые инструкции</h2>
 		<div class="grid">
 			{posts.map(post => (
 				<a href={`/docs/${post.slug}`} class="card">
 					<span class="badge">{post.data.category}</span>
 					<h3>{post.data.title}</h3>
+					<p class="card-desc">{post.data.description}</p>
+					<span class="card-foot"><span>{fmt(post.data.pubDate)}</span><span class="card-more">Читать →</span></span>
 				</a>
 			))}
 		</div>
