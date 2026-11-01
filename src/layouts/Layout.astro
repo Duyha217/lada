@@ -1,6 +1,10 @@
 ---
 import '../styles/global.css';
 
+// Название и значок сайта — меняются только здесь
+const SITE_NAME = 'АвтоСправка LADA';
+const SITE_ICON = '🔧';
+
 interface Props {
 	title: string;
 	description?: string;
@@ -39,9 +43,9 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>{title} — Лада Справка</title>
+		<title>{title} — {SITE_NAME}</title>
 		<meta name="description" content={description} />
-		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🛠</text></svg>" />
+		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🔧</text></svg>" />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content={title} />
 		<meta property="og:description" content={description} />
@@ -54,8 +58,8 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 		<header class="site-header">
 			<div class="container header-inner">
 				<a href="/" class="logo">
-					<span class="logo-icon">🛠</span>
-					<span>Лада Справка</span>
+					<span class="logo-icon">{SITE_ICON}</span>
+					<span>{SITE_NAME}</span>
 				</a>
 				<button class="mobile-menu-btn" id="menuBtn" aria-label="Меню" aria-expanded="false">☰</button>
 				<nav class="main-nav" id="mainNav">
@@ -165,7 +169,7 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 			<div class="container">
 				<div class="footer-grid">
 					<div class="footer-col">
-						<div class="footer-brand">🛠 Лада Справка</div>
+						<div class="footer-brand">{SITE_ICON} {SITE_NAME}</div>
 						<p class="footer-about">Справочник по обслуживанию и самостоятельному ремонту автомобилей LADA: пошаговые инструкции, схемы, расшифровка ошибок и полезные советы.</p>
 					</div>
 					<div class="footer-col">
@@ -176,7 +180,7 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 					</div>
 				</div>
 				<div class="footer-bottom">
-					<p>© 2026 Лада Справка. Все права защищены.</p>
+					<p>© 2026 {SITE_NAME}. Все права защищены.</p>
 
 					<!-- Счетчик LiveInternet -->
 					<div style="margin-top:10px;">
