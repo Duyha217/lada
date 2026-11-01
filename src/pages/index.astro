@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 
+// Сколько последних статей показывать на главной (остальные доступны в разделах моделей)
+const LATEST_COUNT = 60;
+
 const posts = (await getCollection('docs')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 const slugify = (text: string) => {
@@ -10,6 +13,8 @@ const slugify = (text: string) => {
 };
 
 const categories = [...new Set(posts.map(p => p.data.category))].filter(Boolean);
+const latest = posts.slice(0, LATEST_COUNT);
+
 const catStats = categories
   .map(name => ({ name, url: `/category/${slugify(name)}/`, count: posts.filter(p => p.data.category === name).length }))
   .sort((a, b) => b.count - a.count);
@@ -58,7 +63,7 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 	<section class="home-section" id="topics">
 		<h2 class="home-heading">Новые инструкции</h2>
 		<div class="grid">
-			{posts.map(post => (
+			{latest.map(post => (
 				<a href={`/docs/${post.slug}`} class="card">
 					<span class="badge">{post.data.category}</span>
 					<h3>{post.data.title}</h3>
@@ -67,5 +72,8 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 				</a>
 			))}
 		</div>
+		{posts.length > latest.length && (
+			<p class="latest-note">Показаны последние {latest.length} из {posts.length} инструкций. Остальные — в разделах моделей выше.</p>
+		)}
 	</section>
 </Layout>
