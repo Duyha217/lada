@@ -15,6 +15,7 @@ interface Props {
 	categories?: Array<string>;
 	pubDate?: Date;
 	wide?: boolean;
+	ads?: boolean;
 }
 
 const { 
@@ -26,7 +27,8 @@ const {
 	searchData = [],
 	categories = ["Granta", "Vesta", "Largus", "Kalina", "Priora", "Niva Legend"],
 	pubDate,
-	wide = false
+	wide = false,
+	ads = true
 } = Astro.props;
 
 const filteredHeadings = headings.filter(h => h.depth === 2);
@@ -54,6 +56,14 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Manrope:wght@700;800&display=swap" rel="stylesheet">
+		<!-- Рекламный код (AdLayout: Лада). Не показывается на служебных страницах (ads={false}) -->
+		{ads && (
+			<>
+				<script is:inline src="https://cdn.alfasense.net/lib/alfadart.lib.min.js" async></script>
+				<script is:inline src="https://cdn.alfasense.net/js/layout_5493.js" async></script>
+				<script is:inline src="https://cdn.alfasense.net/lib/ad_builder.min.js" async></script>
+			</>
+		)}
 	</head>
 	<body>
 		<header class="site-header">
