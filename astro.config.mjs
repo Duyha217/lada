@@ -1,4 +1,8 @@
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
+
+// Адрес сайта (без слэша в конце). Когда купите свой домен — замените здесь.
+const SITE = 'https://lada-nine.vercel.app';
 
 /* ------------------------------------------------------------
    Плагин разметки статей (работает при сборке, зависимостей нет):
@@ -66,6 +70,8 @@ function rehypeArticle() {
 }
 
 export default defineConfig({
+	site: SITE,
+	integrations: [sitemap()],
 	markdown: {
 		rehypePlugins: [rehypeArticle],
 	},

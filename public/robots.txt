@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lada-nine.vercel.app/sitemap-index.xml

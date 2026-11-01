@@ -45,6 +45,7 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>{title} — {SITE_NAME}</title>
 		<meta name="description" content={description} />
+		{Astro.site && <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site).href} />}
 		<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27><text y=%27.9em%27 font-size=%2790%27>🔧</text></svg>" />
 		<meta property="og:type" content="article" />
 		<meta property="og:title" content={title} />
