@@ -11,7 +11,7 @@ interface Props {
 	category?: string;
 	headings?: Array<{ depth: number; slug: string; text: string }>;
 	related?: Array<any>;
-	searchData?: Array<{ title: string; slug: string; category: string }>;
+	searchData?: Array<{ title: string; slug: string; category: string }>; // больше не используется: поиск читает /search.json
 	categories?: Array<string>;
 	pubDate?: Date;
 	wide?: boolean;
@@ -230,67 +230,109 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 			</div>
 		</div>
 
-		<!-- Скрипт живого поиска -->
-		<script is:inline define:vars={{ searchData }}>
-	const searchInput = document.getElementById('searchInput');
-	const searchResults = document.getElementById('searchResults');
+		<!-- Живой поиск: список статей подгружается один раз из /search.json при первом клике в поле поиска -->
+		<script is:inline>
+(function () {
+	var input = document.getElementById('searchInput');
+	var box = document.getElementById('searchResults');
+	if (!input || !box) return;
 
-	// Карта автозамены русских названий на английские и наоборот
-	const autoSynonyms = {
-		'гранта': 'granta', 'гранту': 'granta', 'гранте': 'granta',
-		'веста': 'vesta', 'весту': 'vesta', 'весте': 'vesta',
-		'калина': 'kalina', 'калину': 'kalina', 'калине': 'kalina',
-		'ларгус': 'largus', 'ларгусе': 'largus',
-		'приора': 'priora', 'приору': 'priora', 'приоре': 'priora',
-		'нива': 'niva', 'ниву': 'niva', 'ниве': 'niva',
+	// Русские названия моделей → латиница (в заголовках модели пишутся как Granta, Vesta…)
+	var synonyms = {
+		'гранта': 'granta', 'гранту': 'granta', 'гранте': 'granta', 'гранты': 'granta',
+		'веста': 'vesta', 'весту': 'vesta', 'весте': 'vesta', 'весты': 'vesta',
+		'калина': 'kalina', 'калину': 'kalina', 'калине': 'kalina', 'калины': 'kalina',
+		'ларгус': 'largus', 'ларгусе': 'largus', 'ларгуса': 'largus',
+		'приора': 'priora', 'приору': 'priora', 'приоре': 'priora', 'приоры': 'priora',
+		'нива': 'niva', 'ниву': 'niva', 'ниве': 'niva', 'нивы': 'niva',
 		'иксрей': 'xray', 'хрей': 'xray',
 		'жигули': 'zhiguli', 'самара': 'samara'
 	};
 
-	if (searchInput && searchResults && searchData) {
-		searchInput.addEventListener('input', (e) => {
-			let query = e.target.value.toLowerCase().trim();
-			
-			if (query.length < 2) {
-				searchResults.style.display = 'none';
-				return;
-			}
+	var index = null;      // [{t: title, l: lowercase title, s: slug}]
+	var loading = null;    // Promise загрузки
+	var active = -1;       // подсвеченный клавишами пункт
 
-			// Разбиваем запрос на слова
-			const words = query.split(/\s+/);
-
-			const matches = searchData.filter(item => {
-				const title = item.title.toLowerCase();
-				
-				// Проверяем каждое слово: ищем как само слово, так и его английский аналог
-				return words.every(word => {
-					const englishTranslation = autoSynonyms[word];
-					if (englishTranslation && title.includes(englishTranslation)) {
-						return true;
-					}
-					return title.includes(word);
-				});
-			}).slice(0, 8);
-
-			if (matches.length > 0) {
-				searchResults.innerHTML = matches.map(m => `
-					<a href="/docs/${m.slug}" class="search-result-item">
-						📁 ${m.title}
-					</a>
-				`).join('');
-				searchResults.style.display = 'block';
-			} else {
-				searchResults.innerHTML = '<div style="padding: 0.6rem 0.8rem; font-size: 0.85rem; color: #64748b;">Ничего не найдено</div>';
-				searchResults.style.display = 'block';
-			}
-		});
-
-		document.addEventListener('click', (e) => {
-			if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-				searchResults.style.display = 'none';
-			}
-		});
+	function load() {
+		if (index) return Promise.resolve(index);
+		if (loading) return loading;
+		loading = fetch('/search.json')
+			.then(function (r) { return r.json(); })
+			.then(function (rows) {
+				index = rows.map(function (r) { return { t: r[0], l: r[0].toLowerCase(), s: r[1] }; });
+				return index;
+			})
+			.catch(function () { loading = null; return []; });
+		return loading;
 	}
+
+	function esc(t) { return t.replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+
+	function search(q) {
+		var words = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+		if (!words.length) return [];
+		var scored = [];
+		for (var i = 0; i < index.length; i++) {
+			var item = index[i], score = 0, ok = true;
+			for (var w = 0; w < words.length; w++) {
+				var word = words[w], alt = synonyms[word];
+				var pos = item.l.indexOf(word);
+				if (pos < 0 && alt) pos = item.l.indexOf(alt);
+				if (pos < 0) { ok = false; break; }
+				// выше те, где слово — начало слова в заголовке
+				score += (pos === 0 || item.l.charAt(pos - 1) === ' ') ? 2 : 1;
+			}
+			if (ok) scored.push({ item: item, score: score });
+		}
+		scored.sort(function (a, b) { return b.score - a.score || a.item.t.length - b.item.t.length; });
+		return scored.slice(0, 8).map(function (x) { return x.item; });
+	}
+
+	function render(list) {
+		active = -1;
+		if (!list.length) {
+			box.innerHTML = '<div style="padding:0.6rem 0.8rem;font-size:0.85rem;color:#64748b;">Ничего не найдено</div>';
+		} else {
+			box.innerHTML = list.map(function (m) {
+				return '<a href="/docs/' + encodeURIComponent(m.s) + '" class="search-result-item">📁 ' + esc(m.t) + '</a>';
+			}).join('');
+		}
+		box.style.display = 'block';
+	}
+
+	function run() {
+		var q = input.value.trim();
+		if (q.length < 2) { box.style.display = 'none'; return; }
+		if (!index) {
+			box.innerHTML = '<div style="padding:0.6rem 0.8rem;font-size:0.85rem;color:#64748b;">Загрузка…</div>';
+			box.style.display = 'block';
+		}
+		load().then(function () { if (input.value.trim() === q) render(search(q)); });
+	}
+
+	var timer;
+	input.addEventListener('focus', load);                       // подгружаем заранее, пока человек печатает
+	input.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(run, 80); });
+
+	// Клавиши: ↑ ↓ — выбор, Enter — открыть, Esc — закрыть
+	input.addEventListener('keydown', function (e) {
+		var links = box.querySelectorAll('a.search-result-item');
+		if (e.key === 'Escape') { box.style.display = 'none'; return; }
+		if (!links.length) return;
+		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+			e.preventDefault();
+			active = (active + (e.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length;
+			links.forEach(function (a, i) { a.style.background = i === active ? '#fff7ed' : ''; });
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			(links[active] || links[0]).click();
+		}
+	});
+
+	document.addEventListener('click', function (e) {
+		if (!input.contains(e.target) && !box.contains(e.target)) box.style.display = 'none';
+	});
+})();
 </script>
 		<script is:inline src="/static/main.js" defer></script>
 	</body>
