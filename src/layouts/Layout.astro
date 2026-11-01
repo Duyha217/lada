@@ -179,6 +179,16 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 							{categories.slice(0, 6).map(cat => (<li><a href={getCategoryUrl(cat)}>📁 {cat}</a></li>))}
 						</ul>
 					</div>
+					<div class="footer-col">
+						<h4>Информация</h4>
+						<ul>
+							<li><a href="/">Главная</a></li>
+							<li><a href="/about/">О проекте</a></li>
+							<li><a href="/contacts/">Контакты</a></li>
+							<li><a href="/privacy/">Конфиденциальность</a></li>
+							<li><a href="/sitemap-index.xml">Карта сайта</a></li>
+						</ul>
+					</div>
 				</div>
 				<div class="footer-bottom">
 					<p>© 2026 {SITE_NAME}. Все права защищены.</p>

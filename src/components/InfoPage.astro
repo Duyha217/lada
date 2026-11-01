@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+interface Props { title: string; description: string; }
+const { title, description } = Astro.props;
+
+const docs = await getCollection('docs');
+const categories = [...new Set(docs.map((d) => d.data.category))].filter(Boolean);
+---
+
+<Layout title={title} description={description} categories={categories} wide>
+	<nav class="breadcrumbs-wide">
+		<a href="/">Главная</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">{title}</span>
+	</nav>
+	<div class="article-main info-card">
+		<div class="article-body">
+			<h1>{title}</h1>
+			<slot />
+		</div>
+	</div>
+</Layout>
