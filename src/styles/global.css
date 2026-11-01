@@ -442,3 +442,15 @@ img { max-width: 100%; height: auto; }
 .info-card { max-width: 860px; margin: 0 auto; }
 .info-card .lead { font-size: 1.15rem; line-height: 1.7; color: #475569; margin-bottom: 1.5rem; }
 .info-card .callout p { margin-bottom: 0; }
+
+/* ---------- Пагинация разделов ---------- */
+.pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2.2rem; }
+.page-btn {
+	min-width: 2.5rem; height: 2.5rem; padding: 0 0.9rem; display: inline-flex; align-items: center; justify-content: center;
+	background: #fff; border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+	font-weight: 600; font-size: 0.92rem; text-decoration: none; transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+a.page-btn:hover { border-color: var(--primary); color: var(--primary); }
+.page-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+.page-btn.disabled { opacity: 0.4; cursor: default; }
+.page-gap { color: var(--muted); padding: 0 0.2rem; }
