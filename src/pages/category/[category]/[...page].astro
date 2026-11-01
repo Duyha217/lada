@@ -1,1 +1,102 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths({ paginate }) {
+  // Сколько статей показывать на одной странице раздела (кратно 4 — ровные ряды)
+  const PAGE_SIZE = 48;
+
+  // (getStaticPaths не видит переменные из кода ниже, поэтому функция продублирована)
+  const slugify = (text: string) =>
+    (text ? text.toLowerCase().replace(/^lada\s+/i, '').trim().replace(/[^a-z0-9а-яё\s-]/gi, '').replace(/\s+/g, '-') : '') || 'other';
+  const docs = await getCollection('docs');
+  const categories = [...new Set(docs.map((doc) => doc.data.category))].filter(Boolean);
+
+  // Для каждого раздела — свой набор страниц: /category/granta/, /category/granta/2/, ...
+  return categories.flatMap((cat) => {
+    const list = docs
+      .filter((doc) => doc.data.category === cat)
+      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+    return paginate(list, {
+      params: { category: slugify(cat) },
+      props: { categoryName: cat },
+      pageSize: PAGE_SIZE,
+    });
+  });
+}
+
+const { page, categoryName } = Astro.props;
+const slug = Astro.params.category;
+
+const allDocs = await getCollection('docs');
+const categories = [...new Set(allDocs.map((doc) => doc.data.category))].filter(Boolean);
+const searchData = allDocs.map((doc) => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+
+const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const plural = (n: number, one: string, few: string, many: string) => {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+};
+
+// Адрес страницы раздела: первая — без номера
+const pageUrl = (n: number) => (n === 1 ? `/category/${slug}/` : `/category/${slug}/${n}/`);
+
+// Номера для пагинации: 1 … 4 5 6 … 20
+const current = page.currentPage;
+const last = page.lastPage;
+const numbers: (number | '…')[] = [];
+for (let n = 1; n <= last; n++) {
+  if (n === 1 || n === last || Math.abs(n - current) <= 1) numbers.push(n);
+  else if (numbers[numbers.length - 1] !== '…') numbers.push('…');
+}
+
+const title = current > 1 ? `Материалы по ${categoryName} — страница ${current}` : `Материалы по ${categoryName}`;
+---
+
+<Layout title={title} category={categoryName} categories={categories} searchData={searchData} wide>
+	<nav class="breadcrumbs-wide">
+		<a href="/">Главная</a><span class="breadcrumb-sep">›</span><span class="breadcrumb-current">{categoryName}</span>
+	</nav>
+
+	<section class="hero hero-category">
+		<h1>{categoryName}</h1>
+		<p>
+			{page.total} {plural(page.total, 'инструкция', 'инструкции', 'инструкций')} по обслуживанию и ремонту{last > 1 && ` · страница ${current} из ${last}`}
+		</p>
+		<div class="hero-search search-box">
+			<div class="search-input-wrapper">
+				<span class="search-icon">🔍</span>
+				<input type="text" id="searchInput" placeholder="Поиск по всем статьям..." autocomplete="off" />
+			</div>
+			<div id="searchResults" class="search-dropdown"></div>
+		</div>
+	</section>
+
+	<section class="home-section">
+		<div class="grid">
+			{page.data.map((post) => (
+				<a href={`/docs/${post.slug}`} class="card">
+					<span class="badge">{post.data.category}</span>
+					<h3>{post.data.title}</h3>
+					<p class="card-desc">{post.data.description}</p>
+					<span class="card-foot"><span>{fmt(post.data.pubDate)}</span><span class="card-more">Читать →</span></span>
+				</a>
+			))}
+		</div>
+
+		{last > 1 && (
+			<nav class="pagination" aria-label="Страницы раздела">
+				{current > 1 ? <a class="page-btn" href={pageUrl(current - 1)} rel="prev">← Назад</a> : <span class="page-btn disabled">← Назад</span>}
+				{numbers.map((n) =>
+					n === '…' ? <span class="page-gap">…</span>
+					: n === current ? <span class="page-btn active" aria-current="page">{n}</span>
+					: <a class="page-btn" href={pageUrl(n)}>{n}</a>
+				)}
+				{current < last ? <a class="page-btn" href={pageUrl(current + 1)} rel="next">Вперёд →</a> : <span class="page-btn disabled">Вперёд →</span>}
+			</nav>
+		)}
+	</section>
+</Layout>
 
