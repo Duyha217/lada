@@ -172,11 +172,25 @@ img { max-width: 100%; height: auto; }
 .article-body pre code { background: none; border: none; color: inherit; white-space: pre; padding: 0; }
 
 /* Буквица у первого абзаца */
-.article-body > h1 + p::first-letter,
-.article-body > h1 + .article-meta + p::first-letter {
-	font-family: var(--font-head); font-size: 3.2rem; font-weight: 800; float: left;
-	line-height: 0.95; margin: 0.15rem 0.5rem 0 0; color: var(--primary);
+.article-body > p.lead {
+	font-size: 1.22rem; line-height: 1.75; color: var(--ink); margin-bottom: 1.6rem;
 }
+.article-body > p.lead::first-letter {
+	font-family: var(--font-head); font-size: 3.3rem; font-weight: 800; float: left;
+	line-height: 0.9; margin: 0.3rem 0.6rem 0 0; color: var(--primary);
+}
+.article-body > p.lead em { font-style: italic; }
+@media (max-width: 640px) {
+	.article-body > p.lead { font-size: 1.1rem; }
+	.article-body > p.lead::first-letter { font-size: 3.1rem; }
+}
+/* Ключевые слова в тексте — жирные с мягкой оранжевой подчёркивающей подсветкой */
+.article-body p strong, .article-body li strong {
+	color: var(--ink); font-weight: 700;
+	background: linear-gradient(transparent 62%, rgba(234, 88, 12, 0.16) 62%);
+	padding: 0 0.12em; border-radius: 2px;
+}
+.article-body th strong, .article-body summary strong, .article-body .callout strong { background: none; padding: 0; }
 
 /* Строка «время чтения · дата» (добавляется скриптом) */
 .article-meta {
@@ -442,6 +456,7 @@ img { max-width: 100%; height: auto; }
 .info-card { max-width: 860px; margin: 0 auto; }
 .info-card .lead { font-size: 1.15rem; line-height: 1.7; color: #475569; margin-bottom: 1.5rem; }
 .info-card .callout p { margin-bottom: 0; }
+.latest-note { margin-top: 1.5rem; text-align: center; color: var(--muted); font-size: 0.9rem; }
 
 /* ---------- Пагинация разделов ---------- */
 .pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.4rem; margin-top: 2.2rem; }
