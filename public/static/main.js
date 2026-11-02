@@ -1,4 +1,4 @@
-/* Лада Справка — интерактив сайта (опрос, оглавление, меню, cookie и т.д.) */
+/* АвтоСправка LADA — интерактив сайта (опрос, оглавление, меню, cookie и т.д.) */
 (function () {
 	'use strict';
 
@@ -133,6 +133,13 @@
 		// мобильное оглавление — под заголовком, а не над ним
 		var mtoc = $('.mobile-toc', body);
 		if (mtoc) meta.insertAdjacentElement('afterend', mtoc);
+
+		// первый абзац статьи — «лид» (крупнее, с буквицей)
+		var first = null;
+		for (var i = 0; i < body.children.length; i++) {
+			if (body.children[i].tagName === 'P') { first = body.children[i]; break; }
+		}
+		if (first) first.classList.add('lead');
 	}
 
 	/* ---------- Якоря у заголовков ---------- */
