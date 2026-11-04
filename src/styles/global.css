@@ -319,6 +319,16 @@ img { max-width: 100%; height: auto; }
 .article-body details[open] > :not(summary) { animation: faq-in 0.25s ease; }
 @keyframes faq-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
+/* Блок-«интрига» в середине статьи: <details class="teaser"> */
+.article-body details.teaser {
+	margin: 1.6rem 0; border: 2px solid var(--ink); border-radius: 12px; background: #fff;
+}
+.article-body details.teaser:hover { border-color: var(--primary); }
+.article-body details.teaser[open] { border-color: var(--primary); background: #fffaf5; box-shadow: 0 6px 18px rgba(234, 88, 12, 0.1); }
+.article-body details.teaser > summary { font-family: var(--font-head); font-size: 1.05rem; }
+.article-body details.teaser[open] > summary { color: var(--primary); }
+.article-body details.teaser > p { font-size: 1rem; }
+
 /* ---------- Сайдбар ---------- */
 .sidebar-box { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 1.2rem; margin-bottom: 1.1rem; box-shadow: var(--shadow-sm); }
 .sidebar-title.orange { font-family: var(--font-head); font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; color: var(--primary); margin-bottom: 0.9rem; }
