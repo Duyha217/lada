@@ -4,6 +4,10 @@ import { getCollection } from 'astro:content';
 
 // Сколько последних статей показывать на главной (остальные доступны в разделах моделей)
 const LATEST_COUNT = 60;
+// Сколько карточек видно сразу и сколько добавляет кнопка «Показать ещё»
+const FIRST_VISIBLE = 12;
+// Сколько статей показывать в каждой вкладке «Что случилось?»
+const TAB_COUNT = 6;
 
 const posts = (await getCollection('docs')).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
@@ -19,7 +23,20 @@ const catStats = categories
   .map(name => ({ name, url: `/category/${slugify(name)}/`, count: posts.filter(p => p.data.category === name).length }))
   .sort((a, b) => b.count - a.count);
 
-const searchData = posts.map(doc => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+// Модели для фильтра свежих статей: самые крупные разделы (кроме «Другое»)
+const filterCats = catStats.filter(c => !/другое/i.test(c.name)).slice(0, 6);
+
+// Вкладки «Что случилось?» — подбираются автоматически по слову в адресе статьи
+const SCENARIOS = [
+  { id: 'service', icon: '🛠', title: 'Обслуживание и ТО', hint: 'масло, фильтры, ремень, жидкости', re: /(^|-)to-|maslo|filtr|antifriz|remen|regulirovka|obsluzh|zamena-zhidk|svech/ },
+  { id: 'errors', icon: '🚨', title: 'Коды ошибок', hint: 'P0xxx, лампа Check Engine', re: /oshibka|error|(^|-)p0\d{3}|(^|-)obd/ },
+  { id: 'electric', icon: '⚡', title: 'Электрика и свет', hint: 'предохранители, лампы, датчики', re: /predokhran|lamp|datchik|generator|akkumul|stop-signal|(^|-)svet|fara|elektr|rele/ },
+  { id: 'engine', icon: '⚙️', title: 'Двигатель и ГРМ', hint: 'клапаны, дроссель, ремень ГРМ', re: /dvigatel|grm|klapan|drossel|gidrokompens|forsunk|zazhig|kolenval|radiator|pompa|pompy/ },
+  { id: 'chassis', icon: '🛞', title: 'Ходовая и тормоза', hint: 'колодки, подшипники, колёса', re: /podshipnik|sajlentblok|kolodk|tormoz|amortiz|stupits|razboltovka|koles|rulev|(^|-)abs|podveska|stoyk/ },
+  { id: 'body', icon: '🚪', title: 'Салон и кузов', hint: 'бампер, обшивка, печка, шумка', re: /bamper|obshivk|pechka|shumoiz|dver|salon|kuzov|steklo|zamok|bagazhnik/ },
+].map(s => ({ ...s, items: posts.filter(p => s.re.test(p.slug)) }))
+  .filter(s => s.items.length > 0);
+
 const plural = (n: number, one: string, few: string, many: string) => {
   const m10 = n % 10, m100 = n % 100;
   if (m10 === 1 && m100 !== 11) return one;
@@ -27,27 +44,93 @@ const plural = (n: number, one: string, few: string, many: string) => {
   return many;
 };
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+const searchData = posts.map(doc => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+
+const QUICK = ['Замена масла', 'Ошибка P0420', 'Блок предохранителей', 'Ремень ГРМ', 'Объём бака', 'Разболтовка колёс'];
+
+const FEATURES = [
+  { icon: '📋', title: 'Пошаговые инструкции', text: 'Нумерованные шаги, список инструмента и частые ошибки — можно делать по ходу работы.' },
+  { icon: '📊', title: 'Таблицы и параметры', text: 'Моменты затяжки, объёмы, размеры и артикулы собраны в таблицы без воды.' },
+  { icon: '🚨', title: 'Расшифровка ошибок', text: 'Коды OBD2 с причинами в порядке вероятности и способами проверки.' },
+  { icon: '🔌', title: 'Схемы и блоки', text: 'Расположение предохранителей, реле и узлов для популярных моделей LADA.' },
+];
+
+const FAQ = [
+  { q: 'Как быстро найти нужную инструкцию?', a: 'Введите в поиск модель и задачу: «замена масла Granta» или код ошибки «P0420». Подсказки появляются по мере набора, а клавиши ↑ ↓ и Enter позволяют выбрать результат без мыши.' },
+  { q: 'Можно ли полностью доверять инструкциям?', a: 'Материалы носят справочный характер. Моменты затяжки, артикулы и объёмы для вашей комплектации сверяйте с руководством по эксплуатации.' },
+  { q: 'Какие модели есть в справочнике?', a: 'Granta, Vesta, Largus, Kalina, Priora, Niva и другие. Полный список — в блоке «Выберите модель» на этой странице и в меню «Все разделы».' },
+  { q: 'Как часто появляются новые статьи?', a: 'База пополняется регулярно. Самые свежие инструкции всегда вверху блока «Новые инструкции».' },
+  { q: 'Нашёл ошибку в статье — что делать?', a: 'Напишите нам через страницу «Контакты». Исправим и обновим материал.' },
+];
 ---
 
 <Layout title="База знаний LADA — Инструкции по ремонту и схемам" wide searchData={searchData} categories={categories}>
-	<section class="hero">
-		<h1>Справочник по ремонту и обслуживанию <span>LADA</span></h1>
-		<p>Пошаговые руководства, схемы блоков предохранителей, расшифровка ошибок OBD2 и артикулы запчастей.</p>
+
+	<!-- ===== Первый экран ===== -->
+	<section class="hero hero-landing">
+		<div class="hero-bg" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
+		<span class="hero-kicker">🔧 Справочник для владельцев LADA</span>
+		<h1>Ремонт и обслуживание <span>LADA</span> — по шагам, без воды</h1>
+		<p>Инструкции, схемы блоков предохранителей, расшифровка ошибок OBD2 и артикулы запчастей. Найдите нужное за пару секунд.</p>
 		<div class="hero-search search-box">
 			<div class="search-input-wrapper">
 				<span class="search-icon">🔍</span>
-				<input type="text" id="searchInput" placeholder="Найти инструкцию..." autocomplete="off" />
+				<input type="text" id="searchInput" placeholder="Модель, узел или код ошибки…" autocomplete="off" />
 			</div>
 			<div id="searchResults" class="search-dropdown"></div>
 		</div>
+		<div class="quick-chips" aria-label="Популярные запросы">
+			<span class="quick-label">Часто ищут:</span>
+			{QUICK.map(q => <button type="button" class="chip" data-q={q}>{q}</button>)}
+		</div>
 		<div class="hero-stats">
-			<span><strong>{posts.length}</strong> инструкций</span>
-			<span><strong>{categories.length}</strong> моделей</span>
+			<span><strong data-count={posts.length}>{posts.length}</strong> {plural(posts.length, 'инструкция', 'инструкции', 'инструкций')}</span>
+			<span><strong data-count={categories.length}>{categories.length}</strong> {plural(categories.length, 'модель', 'модели', 'моделей')}</span>
 			<span>Обновлено <strong>{fmt(posts[0].data.pubDate)}</strong></span>
 		</div>
 	</section>
 
-	<section class="home-section">
+	<!-- ===== Что случилось? ===== -->
+	{SCENARIOS.length > 0 && (
+		<section class="home-section reveal" id="scenarios">
+			<h2 class="home-heading">Что случилось с машиной?</h2>
+			<p class="home-sub">Выберите тему — покажем свежие инструкции по ней.</p>
+			<div class="scn" data-tabs>
+				<div class="scn-tabs" role="tablist">
+					{SCENARIOS.map((s, i) => (
+						<button type="button" role="tab" class={`scn-tab${i === 0 ? ' is-active' : ''}`} data-tab={s.id} aria-selected={i === 0 ? 'true' : 'false'}>
+							<span class="scn-ico">{s.icon}</span>
+							<span class="scn-txt"><strong>{s.title}</strong><em>{s.hint}</em></span>
+						</button>
+					))}
+				</div>
+				<div class="scn-panels">
+					{SCENARIOS.map((s, i) => (
+						<div class={`scn-panel${i === 0 ? ' is-active' : ''}`} data-panel={s.id} role="tabpanel">
+							<div class="scn-panel-head">
+								<h3>{s.icon} {s.title}</h3>
+								<span>{s.items.length} {plural(s.items.length, 'статья', 'статьи', 'статей')}</span>
+							</div>
+							<ul class="scn-list">
+								{s.items.slice(0, TAB_COUNT).map(p => (
+									<li>
+										<a href={`/docs/${p.slug}`}>
+											<span class="scn-item-title">{p.data.title}</span>
+											<span class="scn-item-cat">{p.data.category}</span>
+										</a>
+									</li>
+								))}
+							</ul>
+						</div>
+					))}
+				</div>
+			</div>
+		</section>
+	)}
+
+	<!-- ===== Выберите модель ===== -->
+	<section class="home-section reveal">
 		<h2 class="home-heading">Выберите модель</h2>
 		<div class="cat-tiles">
 			{catStats.map(c => (
@@ -60,11 +143,31 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 		</div>
 	</section>
 
-	<section class="home-section" id="topics">
-		<h2 class="home-heading">Новые инструкции</h2>
-		<div class="grid">
+	<!-- ===== Почему удобно ===== -->
+	<section class="home-section reveal">
+		<div class="features">
+			{FEATURES.map(f => (
+				<div class="feature">
+					<span class="feature-ico">{f.icon}</span>
+					<h3>{f.title}</h3>
+					<p>{f.text}</p>
+				</div>
+			))}
+		</div>
+	</section>
+
+	<!-- ===== Новые инструкции с фильтром ===== -->
+	<section class="home-section reveal" id="topics" data-feed data-step={FIRST_VISIBLE}>
+		<div class="feed-head">
+			<h2 class="home-heading">Новые инструкции</h2>
+			<div class="feed-filter" role="group" aria-label="Фильтр по модели">
+				<button type="button" class="chip is-active" data-cat="">Все</button>
+				{filterCats.map(c => <button type="button" class="chip" data-cat={c.name}>{c.name}</button>)}
+			</div>
+		</div>
+		<div class="grid feed-grid">
 			{latest.map(post => (
-				<a href={`/docs/${post.slug}`} class="card">
+				<a href={`/docs/${post.slug}`} class="card feed-card" data-cat={post.data.category}>
 					<span class="badge">{post.data.category}</span>
 					<h3>{post.data.title}</h3>
 					<p class="card-desc">{post.data.description}</p>
@@ -72,8 +175,34 @@ const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 
 				</a>
 			))}
 		</div>
+		<p class="feed-empty" hidden>В этом разделе пока нет свежих материалов среди последних — откройте раздел модели выше.</p>
+		<div class="feed-more-wrap"><button type="button" class="feed-more" hidden>Показать ещё</button></div>
 		{posts.length > latest.length && (
 			<p class="latest-note">Показаны последние {latest.length} из {posts.length} инструкций. Остальные — в разделах моделей выше.</p>
 		)}
+	</section>
+
+	<!-- ===== Призыв к поиску ===== -->
+	<section class="home-section reveal">
+		<div class="cta-band">
+			<div>
+				<h2>Не нашли нужное?</h2>
+				<p>Поиск понимает названия моделей, узлы и коды ошибок — попробуйте сформулировать иначе.</p>
+			</div>
+			<button type="button" class="cta-btn" id="ctaSearch">Перейти к поиску ↑</button>
+		</div>
+	</section>
+
+	<!-- ===== FAQ ===== -->
+	<section class="home-section reveal">
+		<h2 class="home-heading">Частые вопросы</h2>
+		<div class="faq-grid">
+			{FAQ.map((f, i) => (
+				<details open={i === 0}>
+					<summary>{f.q}</summary>
+					<p>{f.a}</p>
+				</details>
+			))}
+		</div>
 	</section>
 </Layout>
