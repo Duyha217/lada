@@ -214,7 +214,104 @@
 		});
 	}
 
+	/* ---------- Главная: вкладки, счётчики, лента с фильтром, подсказки поиска ---------- */
+	function initHome() {
+		if (!$('.hero-landing')) return;
+
+		// быстрые запросы под поиском: подставляют текст и запускают поиск
+		var input = $('#searchInput');
+		$$('.quick-chips .chip').forEach(function (b) {
+			b.addEventListener('click', function () {
+				if (!input) return;
+				input.value = b.getAttribute('data-q');
+				input.focus();
+				input.dispatchEvent(new Event('input', { bubbles: true }));
+			});
+		});
+		var cta = $('#ctaSearch');
+		if (cta && input) cta.addEventListener('click', function () {
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+			setTimeout(function () { input.focus(); }, 450);
+		});
+
+		// вкладки «Что случилось?»
+		var tabs = $$('.scn-tab');
+		tabs.forEach(function (t) {
+			t.addEventListener('click', function () {
+				var id = t.getAttribute('data-tab');
+				tabs.forEach(function (x) {
+					var on = x === t;
+					x.classList.toggle('is-active', on);
+					x.setAttribute('aria-selected', on ? 'true' : 'false');
+				});
+				$$('.scn-panel').forEach(function (p) {
+					p.classList.toggle('is-active', p.getAttribute('data-panel') === id);
+				});
+			});
+		});
+
+		// лента «Новые инструкции»: фильтр по модели + «Показать ещё»
+		var feed = $('[data-feed]');
+		if (feed) {
+			var step = parseInt(feed.getAttribute('data-step'), 10) || 12;
+			var cards = $$('.feed-card', feed);
+			var chips = $$('.feed-filter .chip', feed);
+			var more = $('.feed-more', feed), empty = $('.feed-empty', feed);
+			var cat = '', limit = step;
+			var render = function () {
+				var matched = cards.filter(function (c) { return !cat || c.getAttribute('data-cat') === cat; });
+				cards.forEach(function (c) { c.classList.add('is-hidden'); });
+				matched.slice(0, limit).forEach(function (c) { c.classList.remove('is-hidden'); });
+				more.hidden = matched.length <= limit;
+				empty.hidden = matched.length > 0;
+			};
+			chips.forEach(function (ch) {
+				ch.addEventListener('click', function () {
+					cat = ch.getAttribute('data-cat') || '';
+					limit = step;
+					chips.forEach(function (x) { x.classList.toggle('is-active', x === ch); });
+					render();
+				});
+			});
+			more.addEventListener('click', function () { limit += step; render(); });
+			render();
+		}
+
+		// счётчики в шапке считают от 0 до значения
+		var counters = $$('[data-count]');
+		var runCount = function (el) {
+			var to = parseInt(el.getAttribute('data-count'), 10);
+			if (!to || to < 2) return;
+			var start = null, dur = 1100;
+			var tick = function (t) {
+				if (start === null) start = t;
+				var k = Math.min(1, (t - start) / dur);
+				el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+				if (k < 1) requestAnimationFrame(tick);
+			};
+			el.textContent = '0';
+			requestAnimationFrame(tick);
+		};
+		counters.forEach(runCount);
+	}
+
+	/* ---------- Плавное появление блоков при прокрутке ---------- */
+	function initReveal() {
+		var els = $$('.reveal');
+		if (!els.length) return;
+		if (!('IntersectionObserver' in window)) { els.forEach(function (e) { e.classList.add('in'); }); return; }
+		var io = new IntersectionObserver(function (entries) {
+			entries.forEach(function (en) {
+				if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+			});
+		}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+		els.forEach(function (e) { io.observe(e); });
+	}
+
 	function init() {
+		document.documentElement.classList.add('js');
+		initHome();
+		initReveal();
 		initPolls();
 		initNav();
 		initMeta();
