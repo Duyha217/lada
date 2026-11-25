@@ -30,7 +30,7 @@ const slug = Astro.params.category;
 
 const allDocs = await getCollection('docs');
 const categories = [...new Set(allDocs.map((doc) => doc.data.category))].filter(Boolean);
-const searchData = allDocs.map((doc) => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+const searchData = allDocs.map((doc) => ({ title: doc.data.title, slug: doc.id, category: doc.data.category }));
 
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const plural = (n: number, one: string, few: string, many: string) => {
@@ -77,7 +77,7 @@ const title = current > 1 ? `Материалы по ${categoryName} — стр�
 	<section class="home-section">
 		<div class="grid">
 			{page.data.map((post) => (
-				<a href={`/docs/${post.slug}`} class="card">
+				<a href={`/docs/${post.id}`} class="card">
 					<span class="badge">{post.data.category}</span>
 					<h3>{post.data.title}</h3>
 					<p class="card-desc">{post.data.description}</p>
@@ -99,4 +99,3 @@ const title = current > 1 ? `Материалы по ${categoryName} — стр�
 		)}
 	</section>
 </Layout>
-

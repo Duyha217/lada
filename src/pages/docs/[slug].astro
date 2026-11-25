@@ -1,42 +1,40 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 
+// Всё «тяжёлое» (список категорий, похожие статьи) считаем ОДИН раз здесь,
+// а не заново на каждой из тысяч страниц — иначе сборка упирается в память.
 export async function getStaticPaths() {
   const docs = await getCollection('docs');
-  return docs.map(entry => ({
-    params: { slug: entry.slug }, props: { entry },
-  }));
+  const categories = [...new Set(docs.map(d => d.data.category))];
+
+  // группируем статьи по категориям один раз
+  const byCat = new Map();
+  for (const d of docs) {
+    if (!byCat.has(d.data.category)) byCat.set(d.data.category, []);
+    byCat.get(d.data.category).push(d);
+  }
+
+  return docs.map(entry => {
+    // 5 похожих статей из той же категории (без самой статьи)
+    const related = (byCat.get(entry.data.category) || [])
+      .filter(d => d.id !== entry.id)
+      .slice(0, 5)
+      .map(d => ({ slug: d.id, data: { title: d.data.title, description: d.data.description, category: d.data.category } }));
+    return { params: { slug: entry.id }, props: { entry, related, categories } };
+  });
 }
 
-const { entry } = Astro.props;
-const { Content, headings } = await entry.render();
-
-const allDocs = await getCollection('docs');
-
-// Ровно 5 похожих статей из той же категории
-const relatedDocs = allDocs
-  .filter(doc => doc.data.category === entry.data.category && doc.slug !== entry.slug)
-  .slice(0, 5);
-
-// Данные для поиска
-const searchData = allDocs.map(doc => ({
-  title: doc.data.title,
-  slug: doc.slug,
-  category: doc.data.category
-}));
-
-// Полный список всех уникальных категорий для выпадающего меню
-const categories = [...new Set(allDocs.map(doc => doc.data.category))];
+const { entry, related, categories } = Astro.props;
+const { Content, headings } = await render(entry);
 ---
 
-<Layout 
-	title={entry.data.title} 
-	description={entry.data.description} 
+<Layout
+	title={entry.data.title}
+	description={entry.data.description}
 	category={entry.data.category}
 	headings={headings}
-	related={relatedDocs}
-	searchData={searchData}
+	related={related}
 	categories={categories}
 	pubDate={entry.data.pubDate}
 >

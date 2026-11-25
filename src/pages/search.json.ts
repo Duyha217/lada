@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 
 export async function GET() {
   const docs = await getCollection('docs');
-  const rows = docs.map((d) => [d.data.title, d.slug, d.data.category]);
+  const rows = docs.map((d) => [d.data.title, d.id, d.data.category]);
   return new Response(JSON.stringify(rows), {
     headers: { 'Content-Type': 'application/json; charset=utf-8' },
   });

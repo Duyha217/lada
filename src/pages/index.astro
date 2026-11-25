@@ -34,7 +34,7 @@ const SCENARIOS = [
   { id: 'engine', icon: '⚙️', title: 'Двигатель и ГРМ', hint: 'клапаны, дроссель, ремень ГРМ', re: /dvigatel|grm|klapan|drossel|gidrokompens|forsunk|zazhig|kolenval|radiator|pompa|pompy/ },
   { id: 'chassis', icon: '🛞', title: 'Ходовая и тормоза', hint: 'колодки, подшипники, колёса', re: /podshipnik|sajlentblok|kolodk|tormoz|amortiz|stupits|razboltovka|koles|rulev|(^|-)abs|podveska|stoyk/ },
   { id: 'body', icon: '🚪', title: 'Салон и кузов', hint: 'бампер, обшивка, печка, шумка', re: /bamper|obshivk|pechka|shumoiz|dver|salon|kuzov|steklo|zamok|bagazhnik/ },
-].map(s => ({ ...s, items: posts.filter(p => s.re.test(p.slug)) }))
+].map(s => ({ ...s, items: posts.filter(p => s.re.test(p.id)) }))
   .filter(s => s.items.length > 0);
 
 const plural = (n: number, one: string, few: string, many: string) => {
@@ -45,7 +45,7 @@ const plural = (n: number, one: string, few: string, many: string) => {
 };
 const fmt = (d: Date) => d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-const searchData = posts.map(doc => ({ title: doc.data.title, slug: doc.slug, category: doc.data.category }));
+const searchData = posts.map(doc => ({ title: doc.data.title, slug: doc.id, category: doc.data.category }));
 
 const QUICK = ['Замена масла', 'Ошибка P0420', 'Блок предохранителей', 'Ремень ГРМ', 'Объём бака', 'Разболтовка колёс'];
 
@@ -58,7 +58,7 @@ const FEATURES = [
 
 const FAQ = [
   { q: 'Как быстро найти нужную инструкцию?', a: 'Введите в поиск модель и задачу: «замена масла Granta» или код ошибки «P0420». Подсказки появляются по мере набора, а клавиши ↑ ↓ и Enter позволяют выбрать результат без мыши.' },
-  { q: 'Можно ли полностью доверять инструкциям?', a: 'Материалы носят справочный характер. Моменты затяжки, артикулы и объёмы для вашей комплектации сверяйте с руководством по эксплуатации.' },
+  { q: 'Можно ли полностью доверять инструкциям?', a: 'Материалы подготовлены с помощью нейросетевых инструментов и носят справочный характер. Моменты затяжки, артикулы и объёмы для вашей комплектации сверяйте с руководством по эксплуатации.' },
   { q: 'Какие модели есть в справочнике?', a: 'Granta, Vesta, Largus, Kalina, Priora, Niva и другие. Полный список — в блоке «Выберите модель» на этой странице и в меню «Все разделы».' },
   { q: 'Как часто появляются новые статьи?', a: 'База пополняется регулярно. Самые свежие инструкции всегда вверху блока «Новые инструкции».' },
   { q: 'Нашёл ошибку в статье — что делать?', a: 'Напишите нам через страницу «Контакты». Исправим и обновим материал.' },
@@ -115,7 +115,7 @@ const FAQ = [
 							<ul class="scn-list">
 								{s.items.slice(0, TAB_COUNT).map(p => (
 									<li>
-										<a href={`/docs/${p.slug}`}>
+										<a href={`/docs/${p.id}`}>
 											<span class="scn-item-title">{p.data.title}</span>
 											<span class="scn-item-cat">{p.data.category}</span>
 										</a>
@@ -167,7 +167,7 @@ const FAQ = [
 		</div>
 		<div class="grid feed-grid">
 			{latest.map(post => (
-				<a href={`/docs/${post.slug}`} class="card feed-card" data-cat={post.data.category}>
+				<a href={`/docs/${post.id}`} class="card feed-card" data-cat={post.data.category}>
 					<span class="badge">{post.data.category}</span>
 					<h3>{post.data.title}</h3>
 					<p class="card-desc">{post.data.description}</p>
