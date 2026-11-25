@@ -145,7 +145,7 @@ const getCategoryUrl = (cat: string) => `/category/${slugify(cat)}/`;
 							<div class="sidebar-box related-box">
 								<h3 class="sidebar-title orange">ПОХОЖИЕ СТАТЬИ</h3>
 								<div class="related-list">
-									{related.map(item => (
+									{related.slice(0, 5).map(item => (
 										<a href={`/docs/${item.slug}`} class="related-item">
 											{item.data.title}
 										</a>

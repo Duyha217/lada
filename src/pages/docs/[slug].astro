@@ -15,14 +15,28 @@ export async function getStaticPaths() {
     byCat.get(d.data.category).push(d);
   }
 
-  return docs.map(entry => {
-    // 5 похожих статей из той же категории (без самой статьи)
-    const related = (byCat.get(entry.data.category) || [])
-      .filter(d => d.id !== entry.id)
-      .slice(0, 5)
-      .map(d => ({ slug: d.id, data: { title: d.data.title, description: d.data.description, category: d.data.category } }));
-    return { params: { slug: entry.id }, props: { entry, related, categories } };
-  });
+  // Сколько статей в блоке «Читайте также» (в боковой колонке показываются первые 5 из них)
+  const RELATED_COUNT = 8;
+
+  // Для каждой статьи берём «соседей» по списку её категории (следующие по кругу).
+  // Так ссылки распределяются по всем статьям, а не достаются всегда одним и тем же.
+  const relatedById = new Map();
+  for (const arr of byCat.values()) {
+    const n = arr.length;
+    for (let i = 0; i < n; i++) {
+      const picked = [];
+      for (let k = 1; k < n && picked.length < RELATED_COUNT; k++) {
+        const d = arr[(i + k) % n];
+        picked.push({ slug: d.id, data: { title: d.data.title, description: d.data.description, category: d.data.category } });
+      }
+      relatedById.set(arr[i].id, picked);
+    }
+  }
+
+  return docs.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry, related: relatedById.get(entry.id) || [], categories },
+  }));
 }
 
 const { entry, related, categories } = Astro.props;
